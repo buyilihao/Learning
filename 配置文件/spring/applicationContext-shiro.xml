@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!--shiro的目标filter-->
+    <bean id="shiroFilterFactory" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <!--注入安全管理器-->
+        <property name="securityManager" ref="securityManager"/>
+        <!--更改默认的登录页面-->
+        <property name="loginUrl" value="/jsp/login.jsp"/>
+        <!--配置shiro过滤链 -->
+        <property name="filterChainDefinitions">
+            <value>
+                <!--
+                    authc：认证过滤器的缩写
+                    anon： 匿名过滤器的缩写
+                    logout: 登出过滤器的缩写
+                    过滤器配置顺序：自上而下
+
+                -->
+                /js/**=anon
+                /admin/imgs/**=anon
+                /admin/css/**=anon
+                /css/**=anon
+                /admin/logout.do = logout
+                /admin/login.do = anon
+                /** = authc
+            </value>
+        </property>
+    </bean>
+
+    <!--声明安全管理器-->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <!--将realm注入安全管理器-->
+        <property name="realm" ref="myRealm"/>
+        <!--将缓存管理器，注入安全管理器中-->
+        <property name="cacheManager" ref="ehCacheManager"/>
+        <!--主机rememberMe管理器-->
+        <property name="rememberMeManager" ref="rememberMeManager"/>
+    </bean>
+    <!--引入自定义realm-->
+    <bean id="myRealm" class="com.baizhi.realm.MyRealm">
+        <property name="credentialsMatcher" ref="credentialsMatcher"/>
+        <!--默认开启缓存-->
+        <property name="authenticationCachingEnabled" value="true"/>
+        <!--指定缓存配置-->
+        <property name="authenticationCacheName" value="authorizationCache"/>
+    </bean>
+
+    <!--替换凭证匹配器 SimpleCredentialsMatcher-->
+    <bean id="credentialsMatcher" class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+        <!--指定加密策略-->
+        <property name="hashAlgorithmName" value="md5"/>
+        <!--指定加密次数-->
+        <property name="hashIterations" value="32"/>
+    </bean>
+
+    <!--开启注解，默认使用calib的方式-->
+    <aop:config proxy-target-class="true"></aop:config>
+    <!--权限授权-->
+    <bean id="authorization" class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <!--注入安全管理器-->
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+
+    <!--引入缓存配置器-->
+    <bean id="ehCacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+        <!--指定配置文件-->
+        <property name="cacheManagerConfigFile" value="classpath:ehcache.xml"/>
+    </bean>
+
+    <!--声明cookie，保存标识数据-->
+    <bean id="cookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <!--cookie的名字 -->
+        <property name="name" value="cmfz_cookie"/>
+        <!--cookie 声明周期  秒-->
+        <property name="maxAge" value="3600"/>
+    </bean>
+
+    <!--rememberMeManager-->
+    <bean id="rememberMeManager" class="org.apache.shiro.web.mgt.CookieRememberMeManager">
+        <property name="cookie" ref="cookie"/>
+    </bean>
+</beans>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:cache="http://www.springframework.org/schema/cache" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+            http://www.springframework.org/schema/beans/spring-beans-4.0.xsd 
+            http://www.springframework.org/schema/mvc 
+            http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd 
+            http://www.springframework.org/schema/context 
+            http://www.springframework.org/schema/context/spring-context-4.0.xsd 
+            http://www.springframework.org/schema/aop 
+            http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+            http://www.springframework.org/schema/cache
+            http://www.springframework.org/schema/cache/spring-cache-4.0.xsd
+            http://www.springframework.org/schema/tx
+            http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+     <!-- druid文件的路径 -->
+     <!--<context:property-placeholder location="classpath:/druid.properties"/>-->
+            
+     <!-- 数据库连接池 --> 
+     <bean id="druid" class="com.alibaba.druid.pool.DruidDataSource">
+     	<property name="driverClassName" value="${druid.driverClassName}"></property>
+    	<property name="url" value="${druid.url}"></property>
+    	<property name="username" value="${druid.username}"></property>
+    	<property name="password" value="${druid.password}"></property>
+    	<property name="initialSize" value="${druid.initialSize}"></property>
+    	<property name="maxActive" value="${druid.maxActive}"></property>
+    	<property name="minIdle" value="${druid.minIdle}"></property>
+    	<property name="maxWait" value="${druid.maxWait}"></property>
+     </bean> 
+     
+      <!-- 管理SqlSessionFactory对象 -->
+     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+     	<!-- 给实体类起别名 -->
+     	<property name="typeAliasesPackage" value="com.hzbank.spring.entity"></property>
+     	<!-- 数据库连接池 -->
+     	<property name="dataSource" ref="druid"></property>
+     	<!-- 注册mappper文件 -->
+     	<property name="mapperLocations" value="classpath:/mappers/**Mapper.xml"></property>
+     </bean>
+     
+    <!-- 生产管理dao -->
+    <bean id="daoManager" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+    	<!-- sqlSessionFactpry对象，属性是value -->
+    	<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+    	<!-- dao接口的包路径 -->
+    	<property name="basePackage" value="com.hzbank.redis.dao"></property>
+    </bean>
+     
+	 <!-- 事务增强对象 -->
+     <!-- jdbc的事务增强类 -->
+     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+     	<property name="dataSource" ref="druid"></property>
+     </bean>
+	<!--配置事务管理模板-->
+	<bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
+		<property name="transactionManager" ref="transactionManager"/>
+	</bean>
+
+     <!--开启注解事务方式-->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+
+</beans>

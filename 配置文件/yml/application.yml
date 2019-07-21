@@ -1,0 +1,3 @@
+spring:
+  profiles:
+    include: redisCluster,mybatis # 引入单机配置文件，前面不用加application

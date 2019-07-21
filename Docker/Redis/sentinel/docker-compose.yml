@@ -1,0 +1,100 @@
+redis-master-host:
+  environment:
+    redis_port: '6379'
+  labels:
+    io.rancher.container.pull_image: always
+  tty: true
+  image: redis-sentinel
+  ports:
+        - "6379:6379"
+        - "16379:16379"
+  stdin_open: true
+  net: redis-sentinel-net
+redis-slaves-6380:
+  environment:
+    master_port: '16379'
+    redis_port: '6380'
+  labels:
+    io.rancher.scheduler.affinity:container_label_soft_ne: name=slaves
+    io.rancher.container.pull_image: always
+    name: slaves
+  tty: true
+  command:
+  - slave
+  image: redis-sentinel
+  ports:
+        - "6380:6380"
+        - "16380:16380"
+  stdin_open: true
+  net: redis-sentinel-net
+redis-slaves-6381:
+  environment:
+    master_port: '16379'
+    redis_port: '6381'
+  labels:
+    io.rancher.scheduler.affinity:container_label_soft_ne: name=slaves
+    io.rancher.container.pull_image: always
+    name: slaves
+  tty: true
+  command:
+  - slave
+  image: redis-sentinel
+  ports:
+        - "6381:6381"
+        - "16381:16381"
+  stdin_open: true
+  net: redis-sentinel-net
+redis-sentinels-6382:
+  environment:
+    master_port: '16379'
+    sentinel_port: '6382'
+  labels:
+    io.rancher.container.pull_image: always
+    name: sentinels
+    io.rancher.scheduler.affinity:container_label_ne: name=sentinels
+  tty: true
+  command:
+  - sentinel
+  image: redis-sentinel
+  ports:
+        - "6382:6382"
+        - "16382:16382"
+  stdin_open: true
+  net: redis-sentinel-net
+redis-sentinels-6383:
+  environment:
+    master_port: '16379'
+    sentinel_port: '6383'
+  labels:
+    io.rancher.container.pull_image: always
+    name: sentinels
+    io.rancher.scheduler.affinity:container_label_ne: name=sentinels
+  tty: true
+  command:
+  - sentinel
+  image: redis-sentinel
+  ports:
+        - "6383:6383"
+        - "16383:16383"
+  stdin_open: true
+  net: redis-sentinel-net
+redis-sentinels-6384:
+  environment:
+    master_port: '16379'
+    sentinel_port: '6384'
+  labels:
+    io.rancher.container.pull_image: always
+    name: sentinels
+    io.rancher.scheduler.affinity:container_label_ne: name=sentinels
+  tty: true
+  command:
+  - sentinel
+  image: redis-sentinel
+  ports:
+        - "6384:6384"
+        - "16384:16384"
+  stdin_open: true
+  net: redis-sentinel-net
+
+
+

@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baizhi.dao.UserDao">
+    <!-- User的resultMap,column是给数据库列起的别名,它对应property类的属性-->
+    <resultMap id="result_User_Map" type="com.baizhi.entity.User">
+        <id column="user_id" property="userId" />
+        <result column="telphone" property="telphone" />
+        <result column="password" property="password" />
+        <result column="user_image" property="userImage" />
+        <result column="nickname" property="nickname" />
+        <result column="name" property="name" />
+        <result column="sex" property="sex" />
+        <result column="autograph" property="autograph" />
+        <result column="user_sheng" property="userSheng" />
+        <result column="user_shi" property="userShi" />
+        <result column="guru_id" property="guruId" />
+    </resultMap>
+	
+	<cache type="org.mybatis.caches.memcached.LoggingMemcachedCache" />
+
+    <!-- 数据库中表名为:cmfz_user的列名,as前是数据库的列明,as后是列的别名用于映射成实体类中的属性,需要注意的是别名必须与resultMap中的column别名一致 -->
+    <sql id="cmfz_user_Column">
+        cmfz_user.user_id as user_id
+        ,cmfz_user.telphone as telphone
+        ,cmfz_user.password as password
+        ,cmfz_user.user_image as user_image
+        ,cmfz_user.nickname as nickname
+        ,cmfz_user.name as name
+        ,cmfz_user.sex as sex
+        ,cmfz_user.autograph as autograph
+        ,cmfz_user.user_sheng as user_sheng
+        ,cmfz_user.user_shi as user_shi
+        ,cmfz_user.guru_id as guru_id
+    </sql>
+
+    <!--获得类名为:User对应的数据库表的数据总行数 -->
+    <select id="getUserRowCount" resultType="java.lang.Long">
+        select count(user_id) from cmfz_user
+    </select>
+    <!-- 获得类名为:User对应数据库中表的数据集合 -->
+    <select id="selectUser" resultMap="result_User_Map">
+        select 
+        <include refid="cmfz_user_Column" /> 
+        from cmfz_user
+    </select> 
+
+    <!-- 获得一个User对象,以参数User对象中不为空的属性作为条件进行查询-->
+    <select id="selectUserByObj" parameterType="com.baizhi.entity.User" resultMap="result_User_Map">
+        select 
+            <include refid="cmfz_user_Column" /> 
+        from cmfz_user
+        <where>
+            <if test="guruId != null "> and cmfz_user.guru_id = #{guruId}</if>
+            <if test="userShi != null "> and cmfz_user.user_shi = #{userShi}</if>
+            <if test="userSheng != null "> and cmfz_user.user_sheng = #{userSheng}</if>
+            <if test="autograph != null "> and cmfz_user.autograph = #{autograph}</if>
+            <if test="sex != null "> and cmfz_user.sex = #{sex}</if>
+            <if test="name != null "> and cmfz_user.name = #{name}</if>
+            <if test="nickname != null "> and cmfz_user.nickname = #{nickname}</if>
+            <if test="userImage != null "> and cmfz_user.user_image = #{userImage}</if>
+            <if test="password != null "> and cmfz_user.password = #{password}</if>
+            <if test="telphone != null "> and cmfz_user.telphone = #{telphone}</if>
+            <if test="userId != null "> and cmfz_user.user_id = #{userId}</if>
+        </where>
+    </select> 
+
+    <!-- 通过User的id获得对应数据库中表的数据对象-->
+    <select id="selectUserById" parameterType="java.lang.Integer" resultMap="result_User_Map">
+        select 
+            <include refid="cmfz_user_Column" /> 
+        from cmfz_user
+        where cmfz_user.user_id = #{id}
+    </select> 
+
+    <!-- 将User插入到对应数据库的表中,包括属性值为null的数据-->
+
+    <insert id="insertUser" parameterType="com.baizhi.entity.User">
+        insert into cmfz_user(user_id,telphone,password,user_image,nickname,name,sex,autograph,user_sheng,user_shi,guru_id) 
+        values(0,#{telphone},#{password},#{userImage},#{nickname},#{name},#{sex},#{autograph},#{userSheng},#{userShi},#{guruId})
+    </insert>
+
+    <!-- 将User中属性值不为null的数据,插入到对应数据库的表中-->
+    <insert id="insertNonEmptyUser" parameterType="com.baizhi.entity.User">
+        insert into cmfz_user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="telphone != null">telphone,</if>
+            <if test="password != null">password,</if>
+            <if test="userImage != null">user_image,</if>
+            <if test="nickname != null">nickname,</if>
+            <if test="name != null">name,</if>
+            <if test="sex != null">sex,</if>
+            <if test="autograph != null">autograph,</if>
+            <if test="userSheng != null">user_sheng,</if>
+            <if test="userShi != null">user_shi,</if>
+            <if test="guruId != null">guru_id,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null"> #{userId},</if>
+            <if test="telphone != null"> #{telphone},</if>
+            <if test="password != null"> #{password},</if>
+            <if test="userImage != null"> #{userImage},</if>
+            <if test="nickname != null"> #{nickname},</if>
+            <if test="name != null"> #{name},</if>
+            <if test="sex != null"> #{sex},</if>
+            <if test="autograph != null"> #{autograph},</if>
+            <if test="userSheng != null"> #{userSheng},</if>
+            <if test="userShi != null"> #{userShi},</if>
+            <if test="guruId != null"> #{guruId},</if>
+        </trim>
+    </insert>
+
+    <!-- 通过User的id将数据库表中对应的数据删除-->
+    <delete id="deleteUserById" parameterType="java.lang.Integer">
+        delete from cmfz_user
+        where user_id = #{id}
+    </delete>
+
+    <!-- 通过User的id将User的数据更新到数据库中对应的表,包括值null的数据-->
+    <update id="updateUserById" parameterType="com.baizhi.entity.User">
+        update cmfz_user set
+            telphone=#{telphone}
+            ,password=#{password}
+            ,user_image=#{userImage}
+            ,nickname=#{nickname}
+            ,name=#{name}
+            ,sex=#{sex}
+            ,autograph=#{autograph}
+            ,user_sheng=#{userSheng}
+            ,user_shi=#{userShi}
+            ,guru_id=#{guruId}
+        where user_id=#{userId}
+    </update>
+
+    <!-- 通过User的id将User中属性值不为null的数据更新到数据库对应的表中-->
+    <update id="updateNonEmptyUserById" parameterType="com.baizhi.entity.User">
+        update cmfz_user
+        <set>
+            <if test="telphone != null">
+                telphone=#{telphone},
+            </if>
+            <if test="password != null">
+                password=#{password},
+            </if>
+            <if test="userImage != null">
+                user_image=#{userImage},
+            </if>
+            <if test="nickname != null">
+                nickname=#{nickname},
+            </if>
+            <if test="name != null">
+                name=#{name},
+            </if>
+            <if test="sex != null">
+                sex=#{sex},
+            </if>
+            <if test="autograph != null">
+                autograph=#{autograph},
+            </if>
+            <if test="userSheng != null">
+                user_sheng=#{userSheng},
+            </if>
+            <if test="userShi != null">
+                user_shi=#{userShi},
+            </if>
+            <if test="guruId != null">
+                guru_id=#{guruId},
+            </if>
+        </set>
+        where user_id=#{userId}
+    </update>
+
+    <!--根据用户名和密码查询User对象-->
+    <select id="selectUserByTelephone" resultMap="result_User_Map">
+          SELECT
+                *
+            FROM
+                cmfz_user
+            WHERE
+                telphone = #{telephone}
+
+    </select>
+
+    <!--查询出所有用户的id-->
+    <select id="selectAllId" resultType="java.lang.Integer">
+        select user_id from cmfz_user WHERE user_id <![CDATA[<>]]> #{id}
+    </select>
+
+    <!--根据id随机查询出5条数据-->
+    <select id="selectUserByRandom" resultMap="result_User_Map">
+        select user_image,nickname,name,user_id from cmfz_user where user_id in
+        <foreach collection="list" open="(" item="ids" separator="," close=")">
+            #{ids}
+        </foreach>
+    </select>
+
+    <!--sql语句控制查出随机的5条数据-->
+    <select id="selectUserByRandomSql" resultMap="result_User_Map">
+        SELECT
+            user_image,nickname,name,user_id
+        FROM
+            cmfz_user
+        WHERE user_id <![CDATA[<>]]> #{id}
+        ORDER BY rand() LIMIT 0,5
+    </select>
+
+    <!--分页展示-->
+    <select id="selectAllByPage" resultMap="result_User_Map">
+        select * from cmfz_user limit #{start},#{rows }
+    </select>
+
+
+    <!--批量删除-->
+    <delete id="deleteMany">
+        delete from cmfz_user where user_id in
+        <foreach collection="array" open="(" separator="," item="ids" close=")">
+            #{ids}
+        </foreach>
+    </delete>
+
+    <!--批量插入-->
+    <insert id="insertMany">
+        <selectKey keyProperty="userId" order="AFTER" resultType="java.lang.Integer">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        insert into cmfz_user (user_id,telphone,password,user_image,nickname,name,sex,autograph,user_sheng,user_shi) values
+        <foreach collection="list" separator="," index="index" item="item">
+            (0,#{item.telphone},#{item.password},#{item.userImage},#{item.nickname},#{item.name},#{item.sex},#{item.autograph},#{item.userSheng},#{item.userShi})
+        </foreach>
+    </insert>
+
+    <!-- 通过User的id获得对应数据库中表的数据对象-->
+    <select id="selectUserByIds" resultMap="result_User_Map">
+        select
+        <include refid="cmfz_user_Column" />
+        from cmfz_user
+        where cmfz_user.user_id in
+        <foreach collection="array" item="ids" open="(" close=")" separator=",">
+            #{ids}
+        </foreach>
+    </select>
+	
+	<!-- 批量存在即更新，不存在即插入 oracle-->
+    <update id="updateOrInsertUserById" parameterType="ArrayList">
+		merge into cmfz_user T
+		using
+		<foreach collection="list" item="item" index="index" open="(" close=") A" separator="union all">
+            (select
+				#{item.userId} as user_id,
+				#{item.telphone} as telphone,
+				#{item.password} as password,
+				#{item.userImage} as user_image,
+				#{item.nickname} as nickname,
+				#{item.name} as name,
+				#{item.sex} as sex,
+				#{item.autograph} as autograph,
+				#{item.userSheng} as user_sheng,
+				#{item.userShi} as user_shi
+			from dual)
+        </foreach>
+        on (T.user_id=A.user_id)
+		when matched then
+			update set
+				T.telphone=A.telphone,
+				T.password=A.password,
+				<!- 此处省略n行 ->
+				T.name=A.name
+		when not matched then
+			insert
+				(user_id,telphone,password,user_image,nickname,name,sex,autograph,user_sheng,user_shi) 
+			values
+				(A.user_id,A.telphone,A.password,A.user_image,A.nickname,A.name,A.sex,A.autograph,A.user_sheng,A.user_shi) 
+    </update>
+
+</mapper>
