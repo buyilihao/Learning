@@ -24,7 +24,7 @@ RabbitMQ是一个由**erlang**开发的AMQP（Advanced Message Queue ）的开�
 
 ![](image\RabbitMQ\458325-20160107091219153-26270174.png)
 
-生产者Send Message “A”被传送到Queue中，消费者发现消息队列Queue中有订阅的消息，就会将这条消息A读取出来进行一些列的业务操作。这里只是一个消费正对应一个队列Queue，也可以多个消费者订阅同一个队列Queue，当然这里就会将Queue里面的消息平分给其他的消费者，但是会存在一个一个问题就是如果每个消息的处理时间不同，就会导致某些消费者一直在忙碌中，而有的消费者处理完了消息后一直处于空闲状态，因为前面已经提及到了Queue会平分这些消息给相应的消费者。这里我们就可以使用prefetchCount来限制每次发送给消费者消息的个数。详情见下图所示： 
+生产者Send Message “A”被传送到Queue中，消费者发现消息队列Queue中有订阅的消息，就会将这条消息A读取出来进行一些列的业务操作。这里只是一个消费正对应一个队列Queue，也可以多个消费者订阅同一个队列Queue，当然这里就会将Queue里面的消息平分给其他的消费者，但是会存在一个问题就是如果每个消息的处理时间不同，就会导致某些消费者一直在忙碌中，而有的消费者处理完了消息后一直处于空闲状态，因为前面已经提及到了Queue会平分这些消息给相应的消费者。这里我们就可以使用prefetchCount来限制每次发送给消费者消息的个数。详情见下图所示： 
 
 ![](image\RabbitMQ\458325-20160107091257496-665638720.png)
 
@@ -195,7 +195,7 @@ channel.addReturnListener(new ReturnListener() {
 
 进一步的从消费者的角度来说，如果在消费者接收到相关消息之后，还没来得及处理就宕机了，这样也算数据丢失。
 
-​    为了保证消息从队列可靠地达到消费者，RabbitMQ提供了消息确认机制（message acknowledgement）。消费者在订阅队列时，可以指定autoAck参数，当autoAck等于false时，RabbitMQ会等待消费者显式地回复确认信号后才从内存（或者磁盘）中移去消息（实质上是先打上删除标记，之后再删除）。当autoAck等于true时，RabbitMQ会自动把发送出去的消息置为确认，然后从内存（或者磁盘）中删除，而不管消费者是否真正的消费到了这些消息。
+​    为了保证消息从队列可靠地达到消费者，RabbitMQ提供了**消息确认机制**（message acknowledgement）。消费者在订阅队列时，可以指定autoAck参数，当autoAck等于false时，RabbitMQ会等待消费者显式地回复确认信号后才从内存（或者磁盘）中移去消息（实质上是先打上删除标记，之后再删除）。当autoAck等于true时，RabbitMQ会自动把发送出去的消息置为确认，然后从内存（或者磁盘）中删除，而不管消费者是否真正的消费到了这些消息。
 
 ​    采用消息确认机制后，只要设置autoAck参数为false，消费者就有足够的时间处理消息（任务），不用担心处理消息过程中消费者进程挂掉后消息丢失的问题，因为RabbitMQ会一直等待持有消息直到消费者显式调用Basic.Ack命令为止。
 
@@ -783,8 +783,6 @@ Hello World Receiver 1：RabbitMQ 2019-3-27 18:08:10 Hello
 Hello World Receiver 1：RabbitMQ 2019-3-27 18:08:41 World
 RabbitMQ Receiver 2: RabbitMQ 2019-3-27 18:09:12 RabbitMQ
 ```
-
-
 
 ## Topic模式
 

@@ -1308,6 +1308,23 @@ two-->User(id=1, name=lihao, age=18.0) #第二次没有sql日志，从缓存中�
 
 RedLock实现（暂时放弃，看不懂）
 
+```java
+RLock lock = redissonClient.getLock(lockKey);
+lock.lock(10,TimeUnit.SECONDS);
+if (!Thread.currentThread().isInterrupted()) {
+
+    try {
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        lock.unlock();
+    }
+}
+```
+
+
+
 ## 3. 高并发抢购
 
 **仅供参考，有很多问题。**
@@ -1335,6 +1352,7 @@ public class SecKillService {
      */
     public void loadCount(Integer productId){
         Product product = productService.findOne(productId);
+        //用Hash类型是不是更好？频繁修改
         redisTemplate.opsForZSet().add("seckill", productId, product.getCount());
         Integer userId=null;
         while (null != (userId= (Integer) redisTemplate.boundListOps(productId).rightPop())) {

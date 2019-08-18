@@ -1,0 +1,11 @@
+dubbo:
+  registry:
+    id: my-registry
+    address: zookeeper://127.0.0.1:2181
+    client: curator
+  application:
+    name: client
+    qos-enable: false #一个模块开启qos即可，否则netty会报端口占用
+  consumer:
+    cluster: failover #集群容错策略
+    loadbalance: roundrobin #负载均衡策略

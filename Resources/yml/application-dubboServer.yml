@@ -1,0 +1,20 @@
+dubbo:
+  #注册中心
+  registry:
+    id: my-registry
+    address: zookeeper://127.0.0.1:2181
+    client: curator
+  #扫包路径
+  scan:
+    base-packages: com.hzbank.service.impl
+  #配置协议 dubbo 端口 20880
+  protocol:
+    name: dubbo
+    port: 20880
+    server: netty4
+  #运维界面配置
+  application:
+    name: server
+    qos-enable: true
+    qos-port: 22222
+    qos-accept-foreign-ip: false

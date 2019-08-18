@@ -250,7 +250,31 @@ Java7 中使用 Entry 来代表每个 HashMap 中的数据节点，Java8 中使�
 
 我们根据数组元素中，第一个节点数据类型是 Node 还是 TreeNode 来判断该位置下是链表还是红黑树的。
 
-### 2.1 put 过程分析
+### 2.1 HashMap 各常量、成员变量作用　
+
+```java
+	 //创建 HashMap 时未指定初始容量情况下的默认容量   
+     static final int DEFAULT_INITIAL_CAPACITY = 1 << 4; 
+ 
+ 　  //HashMap 的最大容量
+	 static final int MAXIMUM_CAPACITY = 1 << 30;
+ 
+     //HashMap 默认的装载因子,当 HashMap 中元素数量超过 容量*装载因子 时，进行　resize()　操作
+     static final float DEFAULT_LOAD_FACTOR = 0.75f;
+ 
+     //用来确定何时将解决 hash 冲突的链表转变为红黑树
+     static final int TREEIFY_THRESHOLD = 8;
+ 
+     // 用来确定何时将解决 hash 冲突的红黑树转变为链表
+     static final int UNTREEIFY_THRESHOLD = 6;
+  
+     /* 当需要将解决 hash 冲突的链表转变为红黑树时，需要判断下此时数组容量，若是由于数组容量太小（小于　MIN_TREEIFY_CAPACITY　）导致的 hash 冲突太多，则不进行链表转变为红黑树操作，转为利用　resize() 函数对　hashMap 扩容　*/
+     static final int MIN_TREEIFY_CAPACITY = 64;
+```
+
+
+
+### 2.2 put 过程分析
 
 ```java
 public V put(K key, V value) {
@@ -307,6 +331,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
         // 对于我们分析的put操作，下面这个 if 其实就是进行 "值覆盖"，然后返回旧值
         if (e != null) {
             V oldValue = e.value;
+            //onlyIfAbsent 如果是 true，那么只有在不存在该 key 时才会进行 put 操作
             if (!onlyIfAbsent || oldValue == null)
                 e.value = value;
             afterNodeAccess(e);
@@ -317,14 +342,14 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
     // 如果 HashMap 由于新插入这个值导致 size 已经超过了阈值，需要进行扩容
     if (++size > threshold)
         resize();
-    afterNodeInsertion(evict);
+    afterNodeInsertion(evict);// 添加新元素之后的后置处理， LinkedHashMap中有具体实现
     return null;
 }
 ```
 
 和 Java7 稍微有点不一样的地方就是，Java7 是先扩容后插入新值的，Java8 先插值再扩容，不过这个不重要。
 
-#### 2.1.2 数组扩容
+#### 2.2.1 数组扩容
 
 resize() 方法用于初始化数组或数组扩容，每次扩容后，容量为原来的 2 倍，并进行数据迁移。
 
@@ -418,7 +443,7 @@ final Node<K,V>[] resize() {
 }
 ```
 
-### 2.2 get 过程分析
+### 2.3 get 过程分析
 
 相对于 put 来说，get 真的太简单了。
 

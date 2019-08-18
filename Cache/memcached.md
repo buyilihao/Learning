@@ -101,7 +101,7 @@ value
 - bytes → 9 (数据存储的字节数)
 - value → memcached
 
-```
+```shell
 set runoob 0 900 9
 memcached
 STORED

@@ -200,7 +200,7 @@ final boolean nonfairTryAcquire(int acquires) {
 
 先判断state是否为0，**如果为0就执行上面提到的lock方法的前半部分**，通过CAS操作将state的值从0变为1，否则判断当前线程是否为exclusiveOwnerThread，然后把state++，也就是重入锁的体现，**我们注意前半部分是通过CAS来保证同步，后半部分并没有同步的体现**，原因是：
 
-> 后半部分是线程重入，再次获得锁时才触发的操作，此时当前线程拥有锁，所以对ReentrantLock的属性操作是无需加锁的。
+> 偏向锁概念：后半部分是线程重入，再次获得锁时才触发的操作，此时当前线程拥有锁，所以对ReentrantLock的属性操作是无需加锁的。
 
 **如果tryAcquire()获取失败，则要执行addWaiter()向等待队列中添加一个独占模式的节点**
 
@@ -218,7 +218,7 @@ final boolean nonfairTryAcquire(int acquires) {
     private Node addWaiter(Node mode) {
         Node node = new Node(Thread.currentThread(), mode);//Node构造方法，this.nextWaiter = mode;
         // Try the fast path of enq; backup to full enq on failure
-        Node pred = tail;
+        Node pred = tail;//把等待队列的尾部节点复制给pred
         if (pred != null) {
             node.prev = pred;
             if (compareAndSetTail(pred, node)) {//通过CAS确保能够在线程安全的情况下，将当前线程加入到链表的尾部

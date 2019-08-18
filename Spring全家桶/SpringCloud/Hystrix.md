@@ -66,7 +66,7 @@ How Does Hystrix Accomplish Its Goals？
 
 官网关于资源隔离的举例如下：
 
-![image](E:image\Hystrix\soa-5-isolation-focused-640.png) 
+![image](image\Hystrix\soa-5-isolation-focused-640.png) 
 
 ### 两种资源隔离模式
 
