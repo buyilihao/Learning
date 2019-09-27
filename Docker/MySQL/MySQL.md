@@ -28,4 +28,6 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 >
 >**--restart=always**: mysql自启动
 >
->**-d mysql:5.7**：使用的镜像
+>**-d **：后台运行
+>
+>**mysql:5.7**：使用的镜像
