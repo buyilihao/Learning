@@ -354,7 +354,7 @@ mockingProgress.reportOngoingStubbing(ongoingStubbing);
 
  在学习了Mockito实现原理之后，发现其实它本质上就是通过代理 + 反模式打桩实现的。那么可以自己实现一个Mockito么？ 
 
-### 实现 mock
+### 1. 实现 mock
 
 Mock的实现关键是，实现动态代理，被 mock 的对象只是“假装”调用了该方法，然后返回假的值。
 
@@ -385,7 +385,7 @@ public class Mockito {
 }
 ```
 
-## **实现 stub**
+### 2. 实现 stub
 
 首先定义一个类，来表示对函数的调用，重写equals()方法，通过函数名 + 参数列表来判断调用是否相同。
 
@@ -465,12 +465,12 @@ public class Mockito {
 }
 ```
 
-## **测试**
+### 3 . 测试
 
 测试用例如下：
 
 ```java
-  @Test
+  	@Test
     public void test() {
         Calculate calculate = mock(Calculate.class);
         when(calculate.add(1, 1)).thenReturn(1);
@@ -478,6 +478,6 @@ public class Mockito {
     }
 ```
 
-## **其他**
+### 4. 其他
 
 Mockito打桩返回的方式有很多，这边主要关注了经常使用的thenAnswer()函数，至于其他thenReturn()、thenThrow()、thenCallRealMethod()、then()函数，基本类似。

@@ -412,7 +412,10 @@ public Semaphore(int permits, boolean fair) {    //这个多了一个参数fair�
 下面说一下Semaphore类中比较重要的几个方法，首先是acquire()、release()方法：
 
 ```java
-`public` `void` `acquire() ``throws` `InterruptedException {  }     ``//获取一个许可``public` `void` `acquire(``int` `permits) ``throws` `InterruptedException { }    ``//获取permits个许可``public` `void` `release() { }          ``//释放一个许可``public` `void` `release(``int` `permits) { }    ``//释放permits个许可`
+public void acquire() throws InterruptedException {  }     //获取一个许可
+public void acquire(int permits) throws InterruptedException { }    //获取permits个许可
+public void release() { }          //释放一个许可
+public void` release(int permits) { }    //释放permits个许可
 ```
 
 acquire()用来获取一个许可，若无许可能够获得，则会一直等待，直到获得许可。
@@ -422,10 +425,17 @@ release()用来释放许可。注意，在释放许可之前，必须先获获�
 这4个方法都会被阻塞，如果想立即得到执行结果，可以使用下面几个方法：
 
 ```java
-`public` `boolean` `tryAcquire() { };    ``//尝试获取一个许可，若获取成功，则立即返回true，若获取失败，则立即返回false``public` `boolean` `tryAcquire(``long` `timeout, TimeUnit unit) ``throws` `InterruptedException { };  ``//尝试获取一个许可，若在指定的时间内获取成功，则立即返回true，否则则立即返回false``public` `boolean` `tryAcquire(``int` `permits) { }; ``//尝试获取permits个许可，若获取成功，则立即返回true，若获取失败，则立即返回false``public` `boolean` `tryAcquire(``int` `permits, ``long` `timeout, TimeUnit unit) ``throws` `InterruptedException { }; ``//尝试获取permits个许可，若在指定的时间内获取成功，则立即返回true，否则则立即返回false`
+//尝试获取一个许可，若获取成功，则立即返回true，若获取失败，则立即返回false
+public boolean tryAcquire() { };   
+//尝试获取一个许可，若在指定的时间内获取成功，则立即返回true，否则则立即返回false
+public boolean tryAcquire(long timeout, TimeUnit unit) throws InterruptedException { };  
+//尝试获取permits个许可，若获取成功，则立即返回true，若获取失败，则立即返回false
+public boolean tryAcquire(int permits) { }; 
+//尝试获取permits个许可，若在指定的时间内获取成功，则立即返回true，否则则立即返回false
+public boolean tryAcquire(int permits, long timeout, TimeUnit unit) throws InterruptedException { }; 
 ```
 
-另外还可以通过**availablePermits()**方法得到可用的许可数目。
+另外还可以通过==availablePermits()==方法得到可用的许可数目。
 
 下面通过一个例子来看一下Semaphore的具体使用：
 
