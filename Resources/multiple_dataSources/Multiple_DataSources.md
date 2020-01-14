@@ -47,7 +47,7 @@
 # 多数据源配置
 spring:
   datasource:
-    bqk:
+    sqlserver:
       driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
       url: jdbc:sqlserver://ip:port;databasename=xx
       username: 
@@ -62,7 +62,7 @@ spring:
       #连接池空闲连接的有效时间 ，设置30分钟
       min-evictable-idle-time-millis: 1800000
       validation-query: SELECT 1
-    poc:
+    mysql:
       driver-class-name: com.mysql.cj.jdbc.Driver
       url: jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
       username: 
@@ -86,7 +86,7 @@ logging:
 ```java
 @Data
 @Component("DataBase2Properties")
-@ConfigurationProperties(prefix = "spring.datasource.poc")
+@ConfigurationProperties(prefix = "spring.datasource.mysql")
 public class DataBase2Properties {
     private String url;
     private String username;
@@ -102,7 +102,7 @@ public class DataBase2Properties {
 ```java
 @Data
 @Component("DataBase1Properties")
-@ConfigurationProperties(prefix = "spring.datasource.bqk")
+@ConfigurationProperties(prefix = "spring.datasource.sqlserver")
 public class DataBase1Properties {
     private String url;
     private String username;
@@ -123,39 +123,39 @@ public class DataBase1Properties {
 
 ```java
 @Configuration
-@MapperScan(basePackages = "com.aliyun.esl.dao.bqk", sqlSessionTemplateRef = "bqkSqlSessionTemplate")
+@MapperScan(basePackages = "com.aliyun.esl.dao.sqlserver", sqlSessionTemplateRef = "bqkSqlSessionTemplate")
 public class DataBaseAConfig {
 
     @Autowired
     public DataBase1Properties properties;
 
-    @Bean(name = "bqkDataSource")
+    @Bean(name = "sqlserverDataSource")
     @Primary
-    public DataSource bqkDataSource() {
+    public DataSource sqlserverDataSource() {
         DataSource dataSource = new DruidDataSource();
         WrapperBeanCopier.copyProperties(properties,dataSource);
 
         return dataSource;
     }
 
-    @Bean(name = "bqkSqlSessionFactory")
+    @Bean(name = "sqlserverSqlSessionFactory")
     @Primary
-    public SqlSessionFactory bqkSqlSessionFactory(@Qualifier("bqkDataSource") DataSource dataSource) throws Exception {
+    public SqlSessionFactory sqlserverSqlSessionFactory(@Qualifier("sqlserverDataSource") DataSource dataSource) throws Exception {
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
-        bean.setMapperLocations(new PathMatchingResourcePatternResolver().getResources("classpath:mappers/bqk/*.xml"));
+        bean.setMapperLocations(new PathMatchingResourcePatternResolver().getResources("classpath:mappers/sqlserver/*.xml"));
         return bean.getObject();
     }
 
-    @Bean(name = "bqkTransactionManager")
+    @Bean(name = "sqlserverTransactionManager")
     @Primary
-    public DataSourceTransactionManager bqkTransactionManager(@Qualifier("bqkDataSource") DataSource dataSource) {
+    public DataSourceTransactionManager sqlserverTransactionManager(@Qualifier("sqlserverDataSource") DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
     }
 
-    @Bean(name = "bqkSqlSessionTemplate")
+    @Bean(name = "sqlserverSqlSessionTemplate")
     @Primary
-    public SqlSessionTemplate bqkSqlSessionTemplate(@Qualifier("bqkSqlSessionFactory") SqlSessionFactory sqlSessionFactory) throws Exception {
+    public SqlSessionTemplate sqlserverSqlSessionTemplate(@Qualifier("sqlserverSqlSessionFactory") SqlSessionFactory sqlSessionFactory) throws Exception {
         return new SqlSessionTemplate(sqlSessionFactory);
     }
 }
@@ -165,38 +165,97 @@ public class DataBaseAConfig {
 
 ```java
 @Configuration
-@MapperScan(basePackages = "com.aliyun.esl.dao.poc", sqlSessionTemplateRef = "pocSqlSessionTemplate")
+@MapperScan(basePackages = "com.aliyun.esl.dao.mysql", sqlSessionTemplateRef = "mysqlSqlSessionTemplate")
 public class DataBase2Config {
 
     @Autowired
     public DataBase2Properties properties;
 
-    @Bean(name = "pocDataSource")
-    public DataSource pocDataSource() {
+    @Bean(name = "mysqlDataSource")
+    public DataSource mysqlDataSource() {
         DataSource dataSource = new DruidDataSource();
         WrapperBeanCopier.copyProperties(properties,dataSource);
 
         return dataSource;
     }
 
-    @Bean(name = "pocSqlSessionFactory")
-    public SqlSessionFactory pocSqlSessionFactory(@Qualifier("pocDataSource") DataSource dataSource) throws Exception {
+    @Bean(name = "mysqlSqlSessionFactory")
+    public SqlSessionFactory mysqlSqlSessionFactory(@Qualifier("mysqlDataSource") DataSource dataSource) throws Exception {
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
-        bean.setMapperLocations(new PathMatchingResourcePatternResolver().getResources("classpath:mappers/poc/*.xml"));
+        bean.setMapperLocations(new PathMatchingResourcePatternResolver().getResources("classpath:mappers/mysql/*.xml"));
         return bean.getObject();
     }
 
-    @Bean(name = "pocTransactionManager")
-    public DataSourceTransactionManager pocTransactionManager(@Qualifier("pocDataSource") DataSource dataSource) {
+    @Bean(name = "mysqlTransactionManager")
+    public DataSourceTransactionManager mysqlTransactionManager(@Qualifier("mysqlDataSource") DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
     }
 
-    @Bean(name = "pocSqlSessionTemplate")
-    public SqlSessionTemplate pocSqlSessionTemplate(@Qualifier("pocSqlSessionFactory") SqlSessionFactory sqlSessionFactory) throws Exception {
+    @Bean(name = "mysqlSqlSessionTemplate")
+    public SqlSessionTemplate mysqlSqlSessionTemplate(@Qualifier("mysqlSqlSessionFactory") SqlSessionFactory sqlSessionFactory) throws Exception {
         return new SqlSessionTemplate(sqlSessionFactory);
     }
 }
 ```
 
 ## 六、事务一致性
+
+ Atomikos多数据源事务配置
+
++ 依赖
+
+```xml
+<!-- jta-atomikos 分布式事务管理 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jta-atomikos</artifactId>
+        </dependency>
+```
+
++ Atomikos配置
+
+```java
+import com.atomikos.icatch.jta.UserTransactionImp;
+import com.atomikos.icatch.jta.UserTransactionManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.jta.JtaTransactionManager;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
+
+/**
+ * 事务管理
+ * @author jacker
+ * @date 2019/8/13 3:41 PM
+ */
+@Configuration
+@EnableTransactionManagement
+public class TransactionManagerConfig {
+    @Bean(name = "userTransaction")
+    public UserTransaction userTransaction() throws Throwable {
+        UserTransactionImp userTransactionImp = new UserTransactionImp();
+        userTransactionImp.setTransactionTimeout(10000);
+        return userTransactionImp;
+    }
+
+    @Bean(name = "atomikosTransactionManager")
+    public TransactionManager atomikosTransactionManager() throws Throwable {
+        UserTransactionManager userTransactionManager = new UserTransactionManager();
+        userTransactionManager.setForceShutdown(false);
+        return userTransactionManager;
+    }
+
+    @Bean(name = "transactionManager")
+    @DependsOn({"userTransaction", "atomikosTransactionManager"})
+    public PlatformTransactionManager transactionManager() throws Throwable {
+        return new JtaTransactionManager(userTransaction(), atomikosTransactionManager());
+    }
+}
+```
+
+ 通过 `@EnableTransactionManagement` 来启用事务管理，该注解会自动查找满足条件的`PlatformTransactionManager` 
