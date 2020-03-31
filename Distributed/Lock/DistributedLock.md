@@ -118,15 +118,39 @@ public class RedisTool {
      * @param seconds 锁过期时间
      * @return
      */
-    public Boolean tryLock(String lockKey, String clientId, long seconds) {
-        return (Boolean) redisTemplate.execute((RedisCallback<Boolean>) redisConnection -> {
-            Jedis jedis = (Jedis)redisConnection.getNativeConnection();
-            String result = jedis.set(lockKey, clientId, SET_IF_NOT_EXIST, SET_WITH_EXPIRE_TIME, seconds);
-            if (LOCK_SUCCESS.equals(result)) {
-                return Boolean.TRUE;
+    public Boolean lock(String lockKey, String clientId, long timeout, long expireTime) {
+        if (StringUtils.isEmpty(lockKey)) {
+            logger.error("Lock object is empty!");
+            return false;
+        }
+        long startTime = System.currentTimeMillis();
+        Jedis jedis = null;
+        try {
+            jedis= jedisPool.getResource();
+            if (null == jedis) {
+                logger.error("fail to get jedis from pool");
+                return false;
             }
-            return Boolean.FALSE;
-        });
+
+            do{
+                String result = jedis.set(lockKey, clientId, SET_IF_NOT_EXIST, SET_WITH_EXPIRE_TIME, expireTime);
+                if (LOCK_SUCCESS.equals(result)) {
+                    return Boolean.TRUE;
+                } else{
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        logger.warn("Sleep failed:"+e.getMessage());
+                    }
+                }
+
+            }while(timeout == -1L || System.currentTimeMillis() - startTime < timeout);
+        }finally {
+            if(jedis != null){
+                jedis.close();
+            }
+        }
+        return Boolean.FALSE;
     }
 
     /**
@@ -135,17 +159,28 @@ public class RedisTool {
      * @param clientId
      * @return
      */
-    public Boolean releaseLock(String lockKey, String clientId){
+    public Boolean unLock(String lockKey, String clientId){
 
-        return (Boolean) redisTemplate.execute((RedisCallback<Boolean>) redisConnection -> {
-            Jedis jedis = (Jedis)redisConnection.getNativeConnection();
+        if(StringUtils.isEmpty(lockKey)){
+            return Boolean.FALSE;
+        }
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            if (null == jedis) {
+                logger.error("fail to get jedis from pool");
+                return Boolean.FALSE;
+            }
             Object result = jedis.eval(RELEASE_LOCK_SCRIPT, Collections.singletonList(lockKey), Collections.singletonList(clientId));
             if (RELEASE_SUCCESS.equals(result)) {
                 return Boolean.TRUE;
             }
-            return Boolean.FALSE;
-        });
-
+        }finally {
+            if(jedis != null){
+                jedis.close();
+            }
+        }
+        return Boolean.FALSE;
     }
 }
 
