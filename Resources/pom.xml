@@ -12,6 +12,7 @@
         <module>springboot-memcached</module>
         <module>springboot-redis</module>
     </modules>
+https://chens.life/2020-2-idea.html
 
     <parent>
         <groupId>org.springframework.boot</groupId>
