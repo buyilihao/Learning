@@ -84,6 +84,8 @@ delete from method_lock where method_name ='methodName';
 
 ## 基于缓存(Redis)实现分布式锁
 
+### 基于Jedis实现
+
 基于Redis命令：
 
 ```shell
@@ -200,6 +202,114 @@ jedis.set(String key, String value, String nxxx, String expx, int time)
 第五个为time，与第四个参数相呼应，代表key的过期时间。
 
 > 为什么上面的代码可以实现分布式锁，根本原因在于 redis 对 set 命令中的 NX 选项和对 lua 脚本的执行都是原子的，因此当多个客户端去争抢执行上锁或解锁代码时，最终只会有一个客户端执行成功。同时 set 命令还可以指定key的有效期，这样即使当前客户端奔溃，过一段时间锁也会被 redis 自动释放，这就给了其它客户端获取锁的机会。
+
+### 基于Lettuce实现
+
+Demo
+
+```java
+public class LettuceLock {
+    private static final String OK = "OK";
+
+    private static final String UNLOCK_SCRIPT;
+
+    /**
+     * 释放锁脚本，原子操作
+     */
+    static {
+        StringBuilder sb = new StringBuilder();
+        sb.append("if redis.call(\"get\",KEYS[1]) == ARGV[1] ");
+        sb.append("then ");
+        sb.append("    return redis.call(\"del\",KEYS[1]) ");
+        sb.append("else ");
+        sb.append("    return 0 ");
+        sb.append("end ");
+        UNLOCK_SCRIPT = sb.toString();
+    }
+
+
+    private StatefulRedisConnection<String, String> redisConnection;
+
+    /**
+     * 锁超时时间，防止线程在入锁以后，无限的执行等待
+     */
+    private int expireMsecs = 5 * 60 * 1000;
+
+    /**
+     * 加锁是否成功
+     */
+    private boolean locked = false;
+
+    /**
+     * lock key path
+     */
+    private String lockKey;
+
+    private String value;
+
+    private int timeoutMsecs = 1000;
+
+    public LettuceLock(StatefulRedisConnection<String, String> redisConnection, String lockKey) {
+        this.redisConnection = redisConnection;
+        this.lockKey = lockKey;
+    }
+
+    public LettuceLock(StatefulRedisConnection<String, String> redisConnection, String lockKey, int timeoutMsecs) {
+        this.redisConnection = redisConnection;
+        this.lockKey = lockKey;
+        this.timeoutMsecs = timeoutMsecs;
+    }
+
+    public LettuceLock(StatefulRedisConnection<String, String> redisConnection, int expireMsecs, String lockKey, int timeoutMsecs) {
+        this.redisConnection = redisConnection;
+        this.expireMsecs = expireMsecs;
+        this.lockKey = lockKey;
+        this.timeoutMsecs = timeoutMsecs;
+    }
+
+    public boolean lock() {
+        long waitMillis = timeoutMsecs;
+        value = UUID.randomUUID().toString();
+        RedisCommands<String, String> redisCommands = redisConnection.sync();
+        while (waitMillis > 0) {
+            long startNanoTime = System.nanoTime();
+            String lockResult = redisCommands.set(lockKey, value, SetArgs.Builder.nx().px(expireMsecs));
+            locked = OK.equals(lockResult);
+            //如果加锁成功，或者到等待时间
+            if (locked || waitMillis == 0) {
+                return locked;
+            }
+            int sleepMillis = new Random().nextInt(100);
+            sleep(sleepMillis);
+            long escapedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanoTime);
+            waitMillis = waitMillis - escapedMillis;
+        }
+        return false;
+    }
+
+    public void unlock() {
+        if (!locked) {
+            return;
+        }
+        RedisCommands<String, String> redisCommands = redisConnection.sync();
+        redisCommands.eval(UNLOCK_SCRIPT, ScriptOutputType.INTEGER, new String[]{lockKey}, value);
+        locked = false;
+    }
+
+    public void close() {
+        unlock();
+    }
+
+    private void sleep(int sleepMillis) {
+        try {
+            Thread.sleep(sleepMillis);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Redis lock InterruptedException", e);
+        }
+    }
+}
+
+```
 
 ## 基于Zookeeper实现分布式锁
 
